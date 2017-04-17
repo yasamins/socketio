@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <title>lkjsldj</title>
+  </head>
+  <body onload="checkusername();">
+    username : <div  id="username">default</div><br/>
+    <input type="text" id="newusername"><button onclick="changeusername(document.getElementById('newusername').value);">change username</button>
+    <hr> Room name : <div  id="roomname">default</div><hr>
+    <input type="text" id="newroomname"><button onclick="roomjoin(document.getElementById('newroomname').value);">Join room</button>
+    <hr />
+    <input type="text" id="postmessage"><button onclick="sendMsg(document.getElementById('postmessage').value);">Post</button> <hr/>
+
+     <div id="messages"></div>
+
+
+    <script src="js/socket.io.js"></script>
+
+
+  <script type="text/javascript">
+const setCookie = (cname,cvalue,exdays) =>{
+    const d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    const expires = "expires=" + d.toGMTString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+const getCookie = (cname) =>{
+    const name = cname + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+const checkusername = ()  =>{
+    let user=getCookie("username");
+    if (user != "") {
+        console.log("Welcome again " + user);
+    } else {
+       user = prompt("Please enter your name:","");
+       if (user != "" && user != null) {
+           setCookie("username", user, 30);
+       }
+    }
+    document.getElementById('username').innerHTML = user;
+
+    startchat();
+    //socket.join('default')
+    sendMsg('I am ready to speak with you');
+    //socket.emit('joinroom', 'hihihihhi');
+    sendMsg('I changed the room');
+
+
+}
+
+
+
+  const roomjoin = (roomname) => {
+  // we have to wait until it's ready
+    console.log('join the room : '+roomname);
+    document.getElementById('messages').innerHTML='Welcome To the '+roomname+' room';
+    // join without waiting for media
+        // then we quit the conference room
+    socket.emit('joinroom', roomname);
+    document.getElementById('roomname').innerHTML = roomname;
+
+}
+const changeusername = (newusername) => {
+    //webrtc.sendDirectlyToAll(document.getElementById('roomname').value,'setDisplayName', newusername);
+    sendMsg(' I am becoming '+newusername);
+    setCookie("username", newusername, 30);
+    document.getElementById('username').innerHTML = newusername;
+
+}
+let socket = null;
+
+const startchat=()=>{
+  socket = io.connect('http://localhost:8888/');
+  socket.on('message',  (data) =>{
+    console.log('got message from server: '+data);
+
+    let remotes = document.getElementById('messages');
+    //const container = document.createElement('div');
+    let message = document.createElement('div');
+   //userdiv.className = 'userdiv';
+    //userdiv.id = 'userdiv_' + peer.id;
+
+    message.innerHTML = data;
+    //container.appendChild(message);
+
+    remotes.appendChild(message);
+
+
+  });
+  socket.on('connect', () =>{
+        console.log('socket.io connected!');
+  });
+  socket.on('disconnect', () =>{
+        console.log('socket.io connected!');
+  });
+
+  //setTimeout(sendMsg, 1000);
+}
+const sendMsg = (messagetosend) => {
+    console.log('send msg'+messagetosend);
+    let msg = {};
+    msg.app_id = this.appName;
+    msg.time = Date.now();
+    msg.json = 'json';
+    // socket.json.emit('message', msg);
+    socket.emit('message', getCookie("username")+' says: '+messagetosend);
+}
+
+
+
+  </script>
+  </body>
+  </html>
